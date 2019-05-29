@@ -1,4 +1,2 @@
-kami
-====
-
-kami
+nextcloud+homeassistant的设置
+备份自己的文件
