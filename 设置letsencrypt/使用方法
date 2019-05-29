@@ -1,0 +1,126 @@
+When you want to make a local HomeAssistant (a home automation software I mentioned before) available from the Internet, you probably want to secure it with SSL. There's an official tutorial on how to do that, but it has a few problems:
+
+It uses the official certbot client, which is super heavy and does all kind of things you don't need
+It requires that port 80 is not used while refreshing certificates
+It requires to forward port 80 from the internet to your internal HomeAssistant server
+So here's is how to do it differently:
+
+we use the very lightweight dehydrated script (formerly known as letsencrypt.sh)
+we use DNS-01 challenges to avoid needing any open ports
+
+Set up DuckDNS
+As in the official tutorial, we use DuckDNS as a dynamic DNS provider. This awesome free service makes the dynamic IP your ISP assigns to you available under a fixed domain.
+
+So first go to https://www.duckdns.org, register an account and create a domain name. For the rest of the tutorial I will use myhome as domain name, resulting in myhome.duckdns.org pointing to my ISP assigned IP address.
+
+Once you've done that, follow their official instructions on how to make your router auto update the IP address.
+
+You probably want to set up a port forwarding to your HomeAssistant server. Eg. in my router I set a forwarding for port 8123 to the internal IP 192.168.1.8 on port 8123, because that's where my HomeAssistant GUI is running.
+
+Before continuing, make sure your HomeAssistant is now available via http://myhome.duckdns.org or whatever domain you set up.
+
+Setting up Dehydrated
+I'm doing the whole setup as homeassistant user on my hassbian based Raspberry Pi. The whole thing should also work as user pi, you will just need to adjust a few paths below.
+
+First get a copy of the current dehydrated script. I'll clone the repository with git, because that makes updating easier later on, but you could also just download the zip from github and unpack that:
+
+$> git clone https://github.com/lukas2511/dehydrated.git
+Now change into the new dehydrated directory and create a new domains.txt file containing your duckdns domain name:
+
+domains.txt
+myhome.duckdns.org
+We also need a config file containing the following:
+
+config
+# Which challenge should be used? Currently http-01 and dns-01 are supported
+CHALLENGETYPE="dns-01"
+
+# Script to execute the DNS challenge and run after cert generation
+HOOK="${BASEDIR}/hook.sh"
+Next we need a hook that will do the DNS challenge for us and will restart HomeAssistant when the certificate has changed. Create a hook.sh file with the following content:
+
+hook.sh
+#!/usr/bin/env bash
+set -e
+set -u
+set -o pipefail
+ 
+domain="myhome"
+token="your-duckdns-token"
+ 
+case "$1" in
+    "deploy_challenge")
+        curl "https://www.duckdns.org/update?domains=$domain&token=$token&txt=$4"
+        echo
+        ;;
+    "clean_challenge")
+        curl "https://www.duckdns.org/update?domains=$domain&token=$token&txt=removed&clear=true"
+        echo
+        ;;
+    "deploy_cert")
+        sudo systemctl restart home-assistant@homeassistant.service
+        ;;
+    "unchanged_cert")
+        ;;
+    "startup_hook")
+        ;;
+    "exit_hook")
+        ;;
+    *)
+        echo Unknown hook "${1}"
+        exit 0
+        ;;
+esac
+Be sure to change the token and domain at the top of the script. Also make the hook script executable:
+
+$> chmod 755 hook.sh
+Generating the Certificate
+Time to run dehydrated.
+
+First, register a new private key with letsencrypt:
+
+$> ./dehydrated --register  --accept-terms
+# INFO: Using main config file /home/homeassistant/dehydrated/config
+ + Generating account key...
+ + Registering account key with ACME server...
+ + Done!
+Then generate the certificate:
+
+$ ./dehydrated -c
+# INFO: Using main config file /home/homeassistant/dehydrated/config
+Processing myhome.duckdns.org
+ + Signing domains...
+ + Generating private key...
+ + Generating signing request...
+ + Requesting challenge for myhome.duckdns.org...
+OK
+ + Responding to challenge for myhome.duckdns.org...
+OK
+ + Challenge is valid!
+ + Requesting certificate...
+ + Checking certificate...
+ + Done!
+ + Creating fullchain.pem...
+ + Walking chain...
+ + Done!
+That's it. We now have a valid certificate!
+
+Automate Renewing
+Let'sEncrypt certificates expire after 90 days, so we need to automatically renew them. We simply call dehydrated via cron on every 1st day of the month:
+
+$> crontab -e
+0 1 1 * * /home/homeassistant/dehydrated/dehydrated -c
+Reconfigure HomeAssistant
+Edit your configuration.yaml and add the new certificate to the http section:
+
+configuration.yaml
+http:
+  api_password: !secret hass_pass
+  ssl_certificate: /home/homeassistant/dehydrated/certs/myhome.duckdns.org/fullchain.pem
+  ssl_key: /home/homeassistant/dehydrated/certs/myhome.duckdns.org/privkey.pem
+  base_url: myhome.duckdns.org:8123
+Finally restart HomeAssistant
+
+$> sudo systemctl restart home-assistant@homeassistant.service
+Your HomeAssistant should now be available via https://myhome.duckdns.org:8123.
+
