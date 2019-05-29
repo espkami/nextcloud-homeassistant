@@ -1,0 +1,5 @@
+light.light1:
+    friendly_name: 测试灯光  
+    hagenie_deviceName: '灯'  
+    hagenie_deviceType: 'light'  
+    hagenie_zone: '客厅' 
