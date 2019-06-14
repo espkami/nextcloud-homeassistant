@@ -1,17 +1,3 @@
-homeassistant:
-  # Name of the location where Home Assistant is running
-  name: Home
-  # Location required to calculate the time the sun rises and sets
-  latitude: 39.9042
-  longitude: 116.407
-  # Impacts weather/sunrise data (altitude above sea level in meters)
-  elevation: 0
-  # metric for Metric, imperial for Imperial
-  unit_system: metric
-  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-  time_zone: Asia/Shanghai
-  # Customization file
-  customize: !include customize.yaml
 
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
@@ -19,12 +5,15 @@ default_config:
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
 #  api_password: !secret hass_pass 
-  ssl_certificate: /home/pi/dehydrated/certs/kamihome.duckdns.org/fullchain.pem
-  ssl_key: /home/pi/dehydrated/certs/kamihome.duckdns.org/privkey.pem
-  base_url: kamihome.duckdns.org:8123
-
-# Discover some devices automatically
-discovery:
+  server_port: 8123
+  ssl_certificate: /ssl/fullchain.pem
+  ssl_key: /ssl/privkey.pem
+  base_url: kamihome.duckdns.org
+zone:
+#主题设置多个主题
+#frontend: !include frontend.yaml
+##网络唤醒
+wake_on_lan:
 
 #链接天猫精灵
 aligenie: 
@@ -39,7 +28,6 @@ mqtt:
   username: hachina
   password: hachina
   discovery: true
-
 light:  
   - platform: mqtt
     name: light1
@@ -49,8 +37,21 @@ light:
     payload_on: "ON"
     payload_off: "OFF"
     retain: true
-
-#测试下
+  - platform: mqtt
+    name: light2
+    state_topic: "stat/s2/POWER"
+    command_topic: "cmnd/s2/POWER/POWER"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+ #天气
+weather:
+- platform: hf_weather
+  name: 1                  # entityid
+  city: hangzhou                      # 城市代码，api平台有查询接口查询
+  appkey: a38fdde9b8fdfd297b4a3c121fb69218    
+sun:
 
 # Sensors
 sensor:
@@ -61,21 +62,151 @@ sensor:
       - exchangerate
       - trade_volume_btc
 
-# Text to speech
+ #小米温度计蓝牙  
+  - platform: mitemp_bt
+    mac: '4C:65:A8:D5:96:53'
+    name: 客厅温度
+    force_update: false
+    median: 3
+    monitored_conditions:
+      - temperature
+      - humidity
+      - battery
+#博联设备接入  学习方法 在服务里选broadlink。lenrn 然后service date 填写例如{"host":"192.168.1.185"}
+#  - platform: broadlink
+#    host: 192.168.50.50
+#    mac: '78:0F:77:5F:C4:CD' 
+    
+####smartir控制可以控制博联小米等的设备 地址https://github.com/smartHomeHub/SmartIR  ##########
+smartir:    
+switch: 
+#########网络唤醒########
+  - platform: wake_on_lan
+    name: keting 
+    mac_address: "F6:DE:23:10:F5:9D"
+  - platform: wake_on_lan    
+    name: shufang 
+    mac_address: "F6:DE:23:10:F5:9D"
+  - platform: wake_on_lan    
+    name: nas 
+    mac_address: "F6:DE:23:10:F5:9D"
+####博联的######
+  - platform: broadlink
+    host: 192.168.50.50
+    mac: '78:0F:77:5F:C4:CD'
+    switches:
+    # Will work on most LG电视
+      tv_lg:
+        friendly_name: "电视开关"
+        command_on: 'JgBYAAABIJISExETETcSEhISEhQQFBETETcROBESEjcRNhM1EjcTNRMTERISNxEUERMSExE2EjYSNhM2EhIROBE3ETcREhITEgAFGwABH0oSAAwzAAEfShEADQU='
+        command_off: 'JgBYAAABIJISExETETcSEhISEhQQFBETETcROBESEjcRNhM1EjcTNRMTERISNxEUERMSExE2EjYSNhM2EhIROBE3ETcREhITEgAFGwABH0oSAAwzAAEfShEADQU='
+      tv_lg_hdmi1_hdmi2:
+        friendly_name: "电视HDMI1&HDMI2切换"
+        command_on: 'JgBIAAABIZMRExITEjYSExMRERURExEUEDkRNxEUEjYSNhM3ETcSNxITETgSNhI2ExMQExE4ETYSNxIUERMSExE4ETcRFBETEQANBQ=='
+        command_off: 'JgBQAAABJJMSEhISETgSEhITEBMSEhMSETcSNxMREjcSNxI3EjcSOBETERITNhM2EhITERM2EzcRNxI3ExISEhI3EjcRExETEgAFLQABJEoRAA0FAAAAAAAAAAA='
+      tv_lg_hdmi3:
+        friendly_name: "电视HDMI3"
+        command_on: 'JgBIAAABIZMSFBISETgRExEUERQQFBETEjcTNhMSETgRNxE3EjcROBM2ERMSFBE4ERMSNxM2EjUSFBE2ETgRExM2ExITEhATEwANBQ=='
+      tv_lg_av1_av2:
+        friendly_name: "电视AV"
+        command_on: 'JgBIAAABIpQPFBITETgSEw8UEhQSEhEVDzgSOBAUETgQOQ84EjgRNxITETgSExA5EDgREhI3EhMROBMSEDkQFBETEjYTEhE4EQANBQ=='
+        command_off: 'JgBIAAABH5YPFBETETgUERAUEBURFBATETgROBEUETcSNxE4ETcSOBISEBUQFREUEjUSFBA5ETcRNxE4ETkQOBAUEjcRFRAUEQANBQ=='
+      tv_lg_yl:
+        friendly_name: "电视音量"
+        command_on: 'JgBQAAABKJMSExITETgSExITERMSExITEjcSOBITEjcSOBI3EjgSNxITEjgRExITEhMSExETEhMSOBETEjgSNxI4EjcSOBI3EgAFJAABKEoRAA0FAAAAAAAAAAA='
+        command_off: 'JgBQAAABJ5MTEhITEjcSExITEhMSExETEjgSNxITEjgROBI4ETgSNxI4EjcSExITEhMRExITEhMSExEUETgSNxI4EjcSOBI3EgAFJAABKEoSAA0FAAAAAAAAAAA='        
+   # 客厅灯遥控
+      deng_kt:
+        friendly_name: "灯开关"
+        command_on: 'JgBQAAABKZQTEhMTEhMSExITExITEhM4EjgTNxM4EjgTNxM4EjgTEhM4EhMSExMSExITEhMTEhMSExM3EzgTNxM3EzgSOBM3EwAFDgABKUoTAA0FAAAAAAAAAAA='
+        command_off: 'JgBQAAABKZQTEhMTEhMSExITExITEhM4EjgTNxM4EjgTNxM4EjgTEhM4EhMSExMSExITEhMTEhMSExM3EzgTNxM3EzgSOBM3EwAFDgABKUoTAA0FAAAAAAAAAAA='
+      deng_kt_yd:
+        friendly_name: "灯夜灯"
+        command_on: 'JgBYAAABK5MUERQRFRAVEBURFBEUERQ2FTYUNhQ2FTUVNhQ2FTYUERQ2FRAVNhQRFBEUERUQFRAVERQ2FBEVNRU2FDYVNRU2FAAFDQABKkgVAAxPAAErSBUADQU='
+        command_off: 'JgBYAAABK5MUERQRFRAVEBURFBEUERQ2FTYUNhQ2FTUVNhQ2FTYUERQ2FRAVNhQRFBEUERUQFRAVERQ2FBEVNRU2FDYVNRU2FAAFDQABKkgVAAxPAAErSBUADQU='   
+      deng_kt_mode:
+        friendly_name: "灯模式"
+        command_on: 'JgBYAAABK5IUERUQFREUERQRFBEVEBU2FDYUNhU2FDYUNhU2EjgUERMSEzgSOBITExITEhMTEhMSOBMSExITOBI4EzcTOBI4EwAFDgABKUoUAAxRAAErSBQADQU='
+        command_off: 'JgBYAAABK5IUERUQFREUERQRFBEVEBU2FDYUNhU2FDYUNhU2EjgUERMSEzgSOBITExITEhMTEhMSOBMSExITOBI4EzcTOBI4EwAFDgABKUoUAAxRAAErSBQADQU='   
+      deng_kt_ld:
+        friendly_name: "灯亮度"
+        command_on: 'JgBYAAABKZQTEhMSExITExITEhMTEhM4EjgTNxM4EjgTNxM4EjgTEhMSEzgSExMSEzcTExITEhMTNxMTEjgSOBMSEzgSOBM3EwAFDwABKUoSAAxSAAEpShMADQU='
+        command_off: 'JgBYAAABKJUSExITExITEhMTEhMSExM3EzgSOBM3FTYSOBM3EzgSExMSEzcTOBI4EzgSExITEhMTNxMTEhMSExMSEzcTOBI4EwAFDgABKUoTAAxSAAErSBQADQU='   
+      deng_kt_sw:
+        friendly_name: "灯色温"
+        command_on: 'JgBYAAABKpMUERQRFRAVERQRFBEUERU1FTYUNhU2FDYUNhU2FDYUERUQFTYUERQRFBEVEBUQFREUNhQRFTUVNhQ2FTUVNhQ2FAAFDQABKkkSAAxSAAEpShQADQU='
+        command_off: 'JgBQAAABKpMTEhMSExMSExITEhMTEhM4EjgTNxM4EjgTNxM4EjgTEhM4EjgTEhMSExITExITEhMTEhMSEzgSOBM3EzgSOBM3EwAFDwABKkkSAA0FAAAAAAAAAAA='         
+  # 机顶盒 
+      jdh_kg:
+        friendly_name: "机顶盒开关"
+        command_on: 'JgBYAAABKZIVNRQ2FBIUEhM3FDYTExM3ExMTEhQ2FDYUEhQSEzcTExMSFBITNxQ2FDYUEhM3EzcTNxQ2FBITExMSFDYUEhQREwAFGAABKUkUAAxlAAEoShQADQU='
+        command_off: 'JgBYAAABKZIVNRQ2FBIUEhM3FDYTExM3ExMTEhQ2FDYUEhQSEzcTExMSFBITNxQ2FDYUEhM3EzcTNxQ2FBITExMSFDYUEhQREwAFGAABKUkUAAxlAAEoShQADQU='
+      jdh_kg_yl:
+        friendly_name: "机顶盒音量"
+        command_on: 'JgBYAAABKZIUNhU1FBIVERM3FDYUEhQ2ExMUERU1FDYUEhURFDYTExMSFREVERQRFREUEhUREzcTNxM3EzcTNxM3EzcTNxMSEwAFHQABKkgUAAxqAAEoShMADQU='
+        command_off: 'JgBYAAABKZMTNxM3ExMTEhQ2FDYUEhQ2FBITExM2FDcTEhQSFDYUEhM3ExMTEhQSFBITExMSFDYUEhQ2FDYUNhQ2FDYUNhQRFAAFHQABKUkUAAxqAAEoShMADQU='   
+      jdh_kg_pd:
+        friendly_name: "机顶盒频道"
+        command_on: 'JgBQAAABKJMTNxM3FBITEhQ2FDcTEhQ2FBIUEhM3EzcTExMSFDYUEhQ2FBITNxMTExIUEhUREzcUEhM3ExIUNhQ2FDYUNxMSEwAFHQABKUkUAA0FAAAAAAAAAAA='
+        command_off: 'JgBYAAABKZMUNhQ2ExIUEhQ2FDYUEhM3FBITEhQ2FTYTEhQSEzcUEhMTEzYVNhMSFRETExMSFDYVNRQSFBIUNhM3FDYUNhUQFAAFHQABKEoTAAxrAAEpSRQADQU='   
+   # 志高风扇
+      zhigao_fs:
+        friendly_name: "风扇开关"
+        command_on: 'JgB6ACoOKQ4OKikOKg4NKg8pDikPKQ4pDiop7ikOKg4OKSoOKQ4OKg4pDykNKg8pDikp9SIPKQ4OKikOKQ8NKg4pDykOKQ8pDikp7isNKQ4OKikOKg4OKQ8pDikOKg4pDikq7SsNKQ4PKSkOKg4OKQ8pDSoOKg4pDiopAA0FAAAAAAAAAAAAAAAAAAA='
+        command_off: 'JgB6ACoOKQ4OKikOKg4NKg8pDikPKQ4pDiop7ikOKg4OKSoOKQ4OKg4pDykNKg8pDikp9SIPKQ4OKikOKQ8NKg4pDykOKQ8pDikp7isNKQ4OKikOKg4OKQ8pDikOKg4pDikq7SsNKQ4PKSkOKg4OKQ8pDSoOKg4pDiopAA0FAAAAAAAAAAAAAAAAAAA='
+      zhigao_fs_fs:
+        friendly_name: "风扇风速"
+        command_on: 'JgDqACkOKg4NKioOKg0OKg4pDykNKg4qKg0OAAEJKQ8pDg4qKQ4qDg0qDSoOKg4pDykpDg4AAQkpDykODiopDikPDSoOKg4pDioOKSoNDwABCCkPKg0PKSkOKg4OKQ4qDikOKQ8pKg0PAAEIKw0pDg4qKg0qDg0qDioNKg8pDikqDg0AAQopDikPDSopDykODioOKQ4pDykOKSoODQABCikOKQ8NKikPKQ4OKg4pDSoPKQ0qKg4OAAEJKg0qDg4pKg4pDg4qDikOKg0qDioqDQ0AAQopDioODSoqDikODioOKQ8pDikNKioODQANBQAAAAAAAAAAAAAAAAAA'
+        command_off: 'JgDqACkOKg4NKioOKg0OKg4pDykNKg4qKg0OAAEJKQ8pDg4qKQ4qDg0qDSoOKg4pDykpDg4AAQkpDykODiopDikPDSoOKg4pDioOKSoNDwABCCkPKg0PKSkOKg4OKQ4qDikOKQ8pKg0PAAEIKw0pDg4qKg0qDg0qDioNKg8pDikqDg0AAQopDikPDSopDykODioOKQ4pDykOKSoODQABCikOKQ8NKikPKQ4OKg4pDSoPKQ0qKg4OAAEJKg0qDg4pKg4pDg4qDikOKg0qDioqDQ0AAQopDioODSoqDikODioOKQ8pDikNKioODQANBQAAAAAAAAAAAAAAAAAA'   
+      zhigao_fs_lf:
+        friendly_name: "风扇冷风"
+        command_on: 'JgBaACoOKQ4OKikOKQ8pDg4qDikOKg4pKQ4r7CoOKQ8NKikPKQ4pDg4qDSoPKQ0qKQ8p7ikOKQ8OKSkPKQ4pDg4qDSoPKQ0qKQ8p7ikOKg4OKSkPKg4pDw0sCwANBQAAAAAAAAAAAAAAAAAA'
+        command_off: 'JgBaACoOKQ4OKikOKQ8pDg4qDikOKg4pKQ4r7CoOKQ8NKikPKQ4pDg4qDSoPKQ0qKQ8p7ikOKQ8OKSkPKQ4pDg4qDSoPKQ0qKQ8p7ikOKg4OKSkPKg4pDw0sCwANBQAAAAAAAAAAAAAAAAAA'   
+      zhigao_fs_yt:
+        friendly_name: "风扇摇头"
+        command_on: 'JgDQACkPKQ4OKikOKQ8NKg4qKQ4NKg4qDikPAAEIKQ8pDg4qKQ4pDw0qDiopDg0rDikNKg4AAQkpDykODiopDikPDSoNKioODSoOKg4pDgABCSkPKQ4NKioOKg0OKg0qKQ8NKg4qDikNAAEKKQ4qDg0qKg4pDg4qDSopDw0qDioOKQ4AAQkpDykODiopDikPDSoNKioODSoOKg0qDgABCSoOKQ4OKikOKQ8OKQ4qKQ4OKg0qDioOAAEJKQ4pDw0qKQ8pDg0qDiopDg4qDSoPKQ0ADQUAAAAAAAAAAA=='
+        command_off: 'JgDQACkPKQ4OKikOKQ8NKg4qKQ4NKg4qDikPAAEIKQ8pDg4qKQ4pDw0qDiopDg0rDikNKg4AAQkpDykODiopDikPDSoNKioODSoOKg4pDgABCSkPKQ4NKioOKg0OKg0qKQ8NKg4qDikNAAEKKQ4qDg0qKg4pDg4qDSopDw0qDioOKQ4AAQkpDykODiopDikPDSoNKioODSoOKg0qDgABCSoOKQ4OKikOKQ8OKQ4qKQ4OKg0qDioOAAEJKQ4pDw0qKQ8pDg0qDiopDg4qDSoPKQ0ADQUAAAAAAAAAAA==='   
+      zhigao_fs_fl:
+        friendly_name: "风扇风类"
+        command_on: 'JgC2ACoNKQ8NKikPKQ4NKw0qDSsNKikODioNAAEKKQ4pDw0qKQ8pDg0rDSoNKg8pKQ4OKg0AAQopDikPDSopDioODSoOKg0qDiopDg4qDQABCikOKQ8NKikOKg4NKg4qDikOKikODioNAAEKKQ4pDg4qKQ4qDg0qDioNKg4qKQ4OKg0AAQopDioODSopDykODSoOKg0qDiopDg4qDQABCikOKQ8NKikPKQ4OKg0qDSoOKikODioNAA0FAAA='
+        command_off: 'JgC2ACoNKQ8NKikPKQ4NKw0qDSsNKikODioNAAEKKQ4pDw0qKQ8pDg0rDSoNKg8pKQ4OKg0AAQopDikPDSopDioODSoOKg0qDiopDg4qDQABCikOKQ8NKikOKg4NKg4qDikOKikODioNAAEKKQ4pDg4qKQ4qDg0qDioNKg4qKQ4OKg0AAQopDioODSopDykODSoOKg0qDiopDg4qDQABCikOKQ8NKikPKQ4OKg0qDSoOKikODioNAA0FAAA='                
+#########扫地机测试文件##########
+
+
+#Text to speech
 tts:
   - platform: google_translate
     language: 'zh-cn'
+####美的空调遥控######
+climate:
+  - platform: smartir
+    name: meidikongtiao
+    unique_id: mdkt
+    device_code: 1380
+    controller_data: 192.168.50.50
+    temperature_sensor: sensor.ke_ting_wen_du_temperaturee
+    humidity_sensor: sensor.ke_ting_wen_du_humidity
+  ######测试监控########
+camera: 
+#  - platform: generic
+#    still_image_url: http://hls01open.ys7.com/openlive/d1d45f3557aa4bae9ab26d4f4f042d1a.m3u8
+#    stream_source: rtmp://rtmp01open.ys7.com/openlive/d1d45f3557aa4bae9ab26d4f4f042d1a
+    
+  - platform: generic
+    name: Weather
+    still_image_url: https://www.yr.no/place/China/Zhejiang/Hangzhou/meteogram.svg
+    content_type: 'image/svg+xml'  
 
 media_player:
   - platform: vlc
-
-introduction_hachina:
-
-tunnel2local:
- # frpc命令位置
-  frpc_bin: "/home/pi/bin/frpc"
-
-redpoint:
+######测试电视媒体########
+#  - platform: smartir
+#    name: Living room TV
+#    unique_id: living_room_tv
+#    device_code: 1040
+#    controller_data: 192.168.50.50
+#    power_sensor: binary_sensor.tv_power        
+        
 
 group: !include groups.yaml
 automation: !include automations.yaml
