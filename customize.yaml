@@ -1,5 +1,23 @@
 light.light1:
-    friendly_name: 测试灯光  
-    hagenie_deviceName: '灯'  
-    hagenie_deviceType: 'light'  
-    hagenie_zone: '客厅' 
+  friendly_name: 过道灯带
+  hagenie_deviceName: 灯带
+  hagenie_deviceType: light
+  hagenie_zone: 客厅
+sensor.ke_ting_wen_du_battery:
+  friendly_name: 温度计电量
+sensor.ke_ting_wen_du_temperature:
+  friendly_name: 客厅温度
+sensor.ke_ting_wen_du_humidity:
+  friendly_name: 客厅湿度
+light.light2:
+  friendly_name: 射灯
+  hagenie_deviceName: 射灯
+  hagenie_deviceType: light
+  hagenie_zone: 客厅
+  
+switch.keting:
+  friendly_name: 客厅电脑
+switch.shufang:
+  friendly_name: 书房电脑 
+switch.nas:
+  friendly_name: nas服务器 
