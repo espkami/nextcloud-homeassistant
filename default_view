@@ -1,0 +1,208 @@
+resources:
+  - url: /local/custom-lovelace/hf_weather-card/hf_weather-card.js
+    type: module
+  - url: /local/custom-lovelace/hf_weather-card/hf_weather-more-info.js
+    type: module
+views:
+  - path: default_view
+    cards:
+      - title: 天气
+        entity: weather.1
+        icons: /local/custom-lovelace/hf_weather-card/icons/animated/
+        type: 'custom:hf_weather-card'
+      - entities:
+          - entity: switch.deng_kt
+          - entity: switch.jdh_kg
+          - entity: switch.tv_lg
+          - entity: switch.zhigao_fs
+        title: 开关
+        type: entities
+      - url: >-
+          https://embed.windy.com/embed2.html?lat=30.297&lon=120.228&zoom=11&level=925h&overlay=wind&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=30.320&detailLon=120.210&metricWind=default&metricTemp=default&radarRange=-1
+        aspect_ratio: 70%
+        title: 天气预报
+        type: iframe
+      - theme: default
+        entities:
+          - entity: sensor.ke_ting_wen_du_temperature
+          - entity: sensor.ke_ting_wen_du_humidity
+          - entity: sensor.ke_ting_wen_du_battery
+        title: '    客厅温度'
+        type: glance
+      - entity: camera.weather
+        title: 天气走势
+        type: picture-entity
+      - entity: weather.1
+        icons: /icons/animated/
+        type: weather-forecast
+    title: 首页
+    badges:
+      - person.kami
+      - sensor.exchange_rate_1_btc
+      - sensor.trade_volume
+      - sensor.yr_symbol
+      - sun.sun
+  - cards:
+      - cards:
+          - type: gauge
+            theme: default
+            min: 0
+            max: 100
+            severity:
+              red: 32
+              green: 5
+              yellow: 28
+            entity: sensor.ke_ting_wen_du_temperature
+          - type: gauge
+            theme: default
+            min: 0
+            max: 100
+            severity:
+              red: 80
+              green: 50
+              yellow: 40
+            entity: sensor.ke_ting_wen_du_humidity
+          - type: gauge
+            theme: default
+            min: 0
+            max: 100
+            severity:
+              red: 0
+              green: 60
+              yellow: 25
+            entity: sensor.ke_ting_wen_du_battery
+        type: horizontal-stack
+      - name: 客厅空调
+        entity: climate.meidikongtiao
+        type: thermostat
+      - cards:
+          - icon: 'mdi:television-box'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.tv_lg
+            show_icon: true
+          - icon: 'mdi:set-top-box'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.jdh_kg
+            show_icon: true
+          - icon: 'mdi:fan'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.zhigao_fs
+            show_icon: true
+        type: horizontal-stack
+      - cards:
+          - icon: 'mdi:ceiling-light'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.deng_kt
+            show_icon: true
+          - icon: 'mdi:car-brake-abs'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.deng_kt_mode
+            show_icon: true
+          - icon: 'mdi:theme-light-dark'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.deng_kt_yd
+            show_icon: true
+        type: horizontal-stack
+      - cards:
+          - icon: 'mdi:wind-turbine'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.zhigao_fs_fl
+            show_icon: true
+          - icon: 'mdi:weather-windy'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.zhigao_fs_fs
+            show_icon: true
+          - icon: 'mdi:yelp'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.zhigao_fs_yt
+            show_icon: true
+          - icon: 'mdi:snowflake'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.zhigao_fs_lf
+            show_icon: true
+        type: horizontal-stack
+      - cards:
+          - image: >-
+              https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1559806826941&di=38df817a3cbbd05243ec1379aece9254&imgtype=0&src=http%3A%2F%2Ftgi1.jia.com%2F117%2F677%2F17677462.jpg
+            entity: light.light1
+            type: picture-entity
+          - image: /local/bed_1.png
+            entity: light.light2
+            type: entity-button
+        type: horizontal-stack
+      - cards:
+          - icon: 'mdi:desktop-classic'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.keting
+            show_icon: true
+          - icon: 'mdi:laptop'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.shufang
+            show_icon: true
+          - icon: 'mdi:server-network'
+            show_name: true
+            type: entity-button
+            tap_action:
+              action: toggle
+            entity: switch.nas
+            show_icon: true
+        type: horizontal-stack
+      - name: 'ceshi '
+        entity: light.light1
+        type: light
+    title: 智能控制
+    badges: []
+  - cards:
+      - entities:
+          - url: 'http://xat6xepkhq.hachina.802154.com'
+            type: weblink
+            name: Internet Address
+            icon: 'mdi:router-wireless'
+        title: 网址
+        type: entities
+      - content: 'https://kamihome.duckdns.org:7777'
+        title: 私人云盘
+        type: markdown
+      - url: 'https://kamihome.duckdns.org:7777/yingshi/'
+        aspect_ratio: 50%
+        title: 监控测试
+        type: iframe
+    title: 网盘资料
+    badges: []
+title: Home
