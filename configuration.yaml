@@ -1,19 +1,33 @@
-
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: 30.3590753240
+  longitude: 120.2289960143
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 0
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Asia/Shanghai
+  # Customization file
+  customize: !include customize.yaml
+zone:
+#主题设置多个主题
+frontend: !include frontend.yaml
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
-
+##网络唤醒
+wake_on_lan:
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
 #  api_password: !secret hass_pass 
   server_port: 8123
-  ssl_certificate: /ssl/fullchain.pem
-  ssl_key: /ssl/privkey.pem
+  ssl_certificate: /home/pi/dehydrated/certs/kamihome.duckdns.org/fullchain.pem
+  ssl_key: /home/pi/dehydrated/certs/kamihome.duckdns.org/privkey.pem
   base_url: kamihome.duckdns.org
-zone:
-#主题设置多个主题
-#frontend: !include frontend.yaml
-##网络唤醒
-wake_on_lan:
+# Discover some devices automatically
+discovery:
 
 #链接天猫精灵
 aligenie: 
@@ -28,6 +42,7 @@ mqtt:
   username: hachina
   password: hachina
   discovery: true
+
 light:  
   - platform: mqtt
     name: light1
@@ -72,6 +87,7 @@ sensor:
       - temperature
       - humidity
       - battery
+   
 #博联设备接入  学习方法 在服务里选broadlink。lenrn 然后service date 填写例如{"host":"192.168.1.185"}
 #  - platform: broadlink
 #    host: 192.168.50.50
@@ -170,6 +186,11 @@ switch:
         friendly_name: "风扇风类"
         command_on: 'JgC2ACoNKQ8NKikPKQ4NKw0qDSsNKikODioNAAEKKQ4pDw0qKQ8pDg0rDSoNKg8pKQ4OKg0AAQopDikPDSopDioODSoOKg0qDiopDg4qDQABCikOKQ8NKikOKg4NKg4qDikOKikODioNAAEKKQ4pDg4qKQ4qDg0qDioNKg4qKQ4OKg0AAQopDioODSopDykODSoOKg0qDiopDg4qDQABCikOKQ8NKikPKQ4OKg0qDSoOKikODioNAA0FAAA='
         command_off: 'JgC2ACoNKQ8NKikPKQ4NKw0qDSsNKikODioNAAEKKQ4pDw0qKQ8pDg0rDSoNKg8pKQ4OKg0AAQopDikPDSopDioODSoOKg0qDiopDg4qDQABCikOKQ8NKikOKg4NKg4qDikOKikODioNAAEKKQ4pDg4qKQ4qDg0qDioNKg4qKQ4OKg0AAQopDioODSopDykODSoOKg0qDiopDg4qDQABCikOKQ8NKikPKQ4OKg0qDSoOKikODioNAA0FAAA='                
+        
+        
+
+
+
 #########扫地机测试文件##########
 
 
@@ -205,9 +226,16 @@ media_player:
 #    unique_id: living_room_tv
 #    device_code: 1040
 #    controller_data: 192.168.50.50
-#    power_sensor: binary_sensor.tv_power        
-        
+#    power_sensor: binary_sensor.tv_power
 
+#introduction_hachina:
+
+#tunnel2local:
+ # frpc命令位置
+  #frpc_bin: "/home/pi/bin/frpc"
+#redpoint:
+#苹果手机支持#
+homekit:
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
