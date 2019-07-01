@@ -1,0 +1,3 @@
+sudo systemctl stop home-assistant@pi.service
+
+sudo pip3 install --upgrade homeassistant
